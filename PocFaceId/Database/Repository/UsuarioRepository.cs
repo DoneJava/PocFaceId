@@ -21,7 +21,7 @@ namespace PocFaceId.Database.Repository
         {
             try
             {
-                var usuario = _context.Usuario.FirstOrDefault();
+                var usuario = _context.Usuario.FirstOrDefault(x => x.Login == login);
                 if(usuario.Senha == senha)
                 {
                     return usuario;
