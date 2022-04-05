@@ -14,6 +14,7 @@ namespace PocFaceId.Data
         {
         }
 
-        public DbSet<PocFaceId.Model.Pessoa> Pessoa { get; set; }
+        public DbSet<Pessoa> Pessoa { get; set; }
+        public DbSet<Usuario> Usuario { get; set; }
     }
 }
