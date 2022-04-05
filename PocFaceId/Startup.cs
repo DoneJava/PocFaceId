@@ -13,6 +13,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PocFaceId.Data;
+using PocFaceId.Database.Interface;
+using PocFaceId.Database.Repository;
 
 namespace PocFaceId
 {
@@ -28,7 +30,9 @@ namespace PocFaceId
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddControllers().AddNewtonsoftJson();
+            services.AddScoped<IPessoaRepository, PessoaRepository>();
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

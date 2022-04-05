@@ -15,5 +15,6 @@ namespace PocFaceId.Model
         public string Senha { get; set; }
         [ForeignKey("Pessoa")]
         public int PessoaId { get; set; }
+        public virtual Pessoa Pessoa { get; set; }
     }
 }
