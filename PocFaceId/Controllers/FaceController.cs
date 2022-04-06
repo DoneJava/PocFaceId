@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.CognitiveServices.Vision.Face;
 using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
-using Newtonsoft.Json;
 using PocFaceId.Database.Interface;
 using PocFaceId.Services;
 using System;
@@ -14,13 +13,13 @@ namespace PocFaceId.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class APIController : ControllerBase
+    public class FaceController : ControllerBase
     {
         const string SUBSCRIPTION_KEY = "726b5b918c3f4b638988a083dda31985";
         const string ENDPOINT = "https://eafcgfaceid01.cognitiveservices.azure.com/";
         private readonly IPessoaRepository _pessoaRepository;
         private readonly IUsuarioRepository _usuarioRepository;
-        public APIController(IPessoaRepository pessoaRepository, IUsuarioRepository usuarioRepository)
+        public FaceController(IPessoaRepository pessoaRepository, IUsuarioRepository usuarioRepository)
         {
             _pessoaRepository = pessoaRepository;
             _usuarioRepository = usuarioRepository;
@@ -32,7 +31,7 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<double> Login([FromBody]string faceComparacaoImage, string login, string senha)
+        public async Task<string> Login([FromBody]string faceComparacaoImage, string login, string senha)
         {
             try
             {
@@ -41,16 +40,17 @@ namespace PocFaceId.Controllers
                 {
                     var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);
                     Conversor converter = new Conversor();
-                    var face1 = converter.ConvertImgToBase64(@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\teste6.jpg");
-                    var face2 = converter.ConvertImgToBase64(@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\teste7.jpg");
+                    var face1 = converter.ConvertImgToBase64($@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\{faceComparacaoImage}");
+                    var face2 = converter.ConvertImgToBase64(@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\teste20.jpg");
                     string recognitionModel03 = RecognitionModel.Recognition04;
                     IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);     
-                    List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, face2, recognitionModel03);
+                    List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, face1, recognitionModel03);
                     Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
-                    List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, face1, recognitionModel03);
+                    List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, face2, recognitionModel03);
                     Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
                     VerifyResult resultadoVerificacao = await client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
-                    return resultadoVerificacao.Confidence;
+                    string aux = $@"{resultadoVerificacao.IsIdentical} {resultadoVerificacao.Confidence}";
+                    return aux;
                 }
                 else
                 {
