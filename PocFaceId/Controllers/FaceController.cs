@@ -2,6 +2,7 @@
 using Microsoft.Azure.CognitiveServices.Vision.Face;
 using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using PocFaceId.Database.Interface;
+using PocFaceId.Model.DTO;
 using PocFaceId.Services;
 using System;
 using System.Collections.Generic;
@@ -31,26 +32,34 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<string> Login([FromBody]string faceComparacaoImage, string login, string senha)
+        public async Task<string> Login([FromBody]string cpf, string senha, string fotoAtual)
         {
             try
             {
-                var usuario = _usuarioRepository.buscarPessoaIdLogin(login, senha);
+                var usuario = _usuarioRepository.buscarPessoaIdLogin(cpf, senha);
                 if (usuario != null)
                 {
-                    var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);
-                    Conversor converter = new Conversor();
-                    var face1 = converter.ConvertImgToBase64($@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\{faceComparacaoImage}");
-                    var face2 = converter.ConvertImgToBase64(@"C:\Users\estagio.vagnerluis\Desktop\TESTANDOSRF\teste20.jpg");
+                    var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);  
                     string recognitionModel03 = RecognitionModel.Recognition04;
                     IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);     
-                    List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, face1, recognitionModel03);
+                    List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, fotoAtual, recognitionModel03);
+                    if (faceReferencia.Count > 1)
+                    {
+                        return "Por favor, fique somente 1 pessoa em frente a câmera.";
+                    }
                     Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
-                    List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, face2, recognitionModel03);
+                    List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, pessoa.Foto, recognitionModel03);
                     Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
                     VerifyResult resultadoVerificacao = await client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
-                    string aux = $@"{resultadoVerificacao.IsIdentical} {resultadoVerificacao.Confidence}";
-                    return aux;
+                    double valorMínConfianca = 0.8;
+                    if (resultadoVerificacao.Confidence >= valorMínConfianca)
+                    {
+                        return $"Bem vindo a validação da Prova de Conceito sr(a), {pessoa.Nome}";
+                    }
+                    else
+                    {
+                        return $"A pessoa que está em frente a câmera não é o(a) sr(a), {pessoa.Nome}";
+                    }                  
                 }
                 else
                 {
@@ -60,6 +69,18 @@ namespace PocFaceId.Controllers
             catch(Exception e)
             {
                 throw new Exception(e.Message);
+            }
+        }
+        [HttpPut]
+        public async Task<bool> Cadastrar([FromBody]CadastroDTO cadastro)
+        {
+            if (_usuarioRepository.CadastrarUsuário(cadastro))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 

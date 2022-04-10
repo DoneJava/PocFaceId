@@ -1,6 +1,7 @@
 ﻿using PocFaceId.Data;
 using PocFaceId.Database.Interface;
 using PocFaceId.Model;
+using PocFaceId.Model.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace PocFaceId.Database.Repository
         {
             _context = context;
         }
+
 
         public Usuario buscarPessoaIdLogin (string login, string senha)
         {
@@ -36,6 +38,35 @@ namespace PocFaceId.Database.Repository
                 throw new Exception(ex.Message);
             }
         } 
-
+        public bool CadastrarUsuário(CadastroDTO cadastro)
+        {
+            try
+            {
+                Usuario usuarioCadastrado = new Usuario();
+                Pessoa pessoaCadastrada = new Pessoa();
+                if (cadastro != null)
+                {
+                    pessoaCadastrada.Nome = cadastro.Nome;
+                    pessoaCadastrada.Foto = cadastro.Foto;
+                    var teste = _context.Add(pessoaCadastrada);
+                    _context.SaveChanges();
+                    var pessoa = _context.Pessoa.FirstOrDefault(x => x.Foto == cadastro.Foto && x.Nome == cadastro.Nome);
+                    usuarioCadastrado.Login = cadastro.cpf;
+                    usuarioCadastrado.Senha = cadastro.Senha;
+                    usuarioCadastrado.PessoaId = pessoa.Id;
+                    _context.Usuario.Add(usuarioCadastrado);
+                    _context.SaveChanges();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
     }
 }
