@@ -8,8 +8,8 @@ namespace PocFaceId.Model.DTO
     public class CadastroDTO
     {
         public string cpf { get; set; }
-        public string Senha { get; set; }
-        public string Foto { get; set; }
-        public string Nome { get; set; }
+        public string password { get; set; }
+        public string img { get; set; }
+        public string name { get; set; }
     }
 }

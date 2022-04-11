@@ -18,11 +18,9 @@ namespace PocFaceId.Controllers
     {
         const string SUBSCRIPTION_KEY = "726b5b918c3f4b638988a083dda31985";
         const string ENDPOINT = "https://eafcgfaceid01.cognitiveservices.azure.com/";
-        private readonly IPessoaRepository _pessoaRepository;
         private readonly IUsuarioRepository _usuarioRepository;
-        public FaceController(IPessoaRepository pessoaRepository, IUsuarioRepository usuarioRepository)
+        public FaceController(IUsuarioRepository usuarioRepository)
         {
-            _pessoaRepository = pessoaRepository;
             _usuarioRepository = usuarioRepository;
         }
 
@@ -32,51 +30,35 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<string> Login([FromBody] string cpf, string senha, string fotoAtual)
+        public async Task<string> ValidarUsuario([FromBody] CadastroDTO cadastroDTO)
         {
-            try
-            {
-                var usuario = _usuarioRepository.buscarPessoaIdLogin(cpf, senha);
-                if (usuario != null)
-                {
-                    var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);
-                    string recognitionModel03 = RecognitionModel.Recognition04;
-                    IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);
-                    List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, fotoAtual, recognitionModel03);
-                    if (faceReferencia.Count > 1)
-                    {
-                        return "Por favor, fique somente 1 pessoa em frente a câmera.";
-                    }
-                    Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
-                    List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, pessoa.Foto, recognitionModel03);
-                    Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
-                    VerifyResult resultadoVerificacao = await client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
-                    double valorMínConfianca = 0.8;
-                    if (resultadoVerificacao.Confidence >= valorMínConfianca)
-                    {
-                        return $"Bem vindo a validação da Prova de Conceito sr(a), {pessoa.Nome}";
-                    }
-                    else
-                    {
-                        return $"A pessoa que está em frente a câmera não é o(a) sr(a), {pessoa.Nome}";
-                    }
-                }
-                else
-                {
-                    throw new Exception("Não foi possível encontrar o usuário.");
-                }
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
+            if (usuario == null)
+                throw new Exception("Não foi possível encontrar o usuário.");
+            string recognitionModel03 = RecognitionModel.Recognition04;
+            IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);
+            List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, cadastroDTO.img, recognitionModel03);
+            if (faceReferencia.Count > 1)
+                return "Por favor, fique somente 1 pessoa em frente a câmera.";
+            Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
+            List<DetectedFace> faceComparacao = await DetectFaceRecognize(client, usuario.Pessoa.Foto, recognitionModel03);
+            Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
+            VerifyResult resultadoVerificacao = await client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
+            double valorMínConfianca = 0.8;
+            if (resultadoVerificacao.Confidence >= valorMínConfianca)
+                return $"Bem vindo a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}";
+            else
+                return $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}";
+
         }
 
-
         [HttpPut]
-        public async Task<string> Cadastrar([FromBody] CadastroDTO cadastro)
+        public async Task<string> Login([FromBody] CadastroDTO cadastroDTO)
         {
-           return _usuarioRepository.CadastrarUsuário(cadastro);
+            if (_usuarioRepository.Logar(cadastroDTO))
+                return "Login feito com sucesso!";
+            else
+                return "Login ou senha inválidos!";
         }
 
         private async Task<List<DetectedFace>> DetectFaceRecognize(IFaceClient faceClient, string image64, string recognition_model)
@@ -89,9 +71,7 @@ namespace PocFaceId.Controllers
             {
                 var faceQualityForRecognition = detectedFace.FaceAttributes.QualityForRecognition;
                 if (faceQualityForRecognition.HasValue && (faceQualityForRecognition.Value >= QualityForRecognition.Medium))
-                {
                     sufficientQualityFaces.Add(detectedFace);
-                }
             }
             return sufficientQualityFaces.ToList();
         }

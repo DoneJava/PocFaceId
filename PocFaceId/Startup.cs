@@ -31,9 +31,14 @@ namespace PocFaceId
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().AddNewtonsoftJson();
-            services.AddScoped<IPessoaRepository, PessoaRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddControllers();
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            }));
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PocFaceId", Version = "v1" });
@@ -56,6 +61,9 @@ namespace PocFaceId
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors("MyPolicy");
+
 
             app.UseAuthorization();
 
