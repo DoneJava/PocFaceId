@@ -10,6 +10,6 @@ namespace PocFaceId.Database.Interface
     public interface IUsuarioRepository
     {
         Usuario buscarPessoaIdLogin(string login, string senha);
-        bool CadastrarUsuário(CadastroDTO cadastro);
+        string CadastrarUsuário(CadastroDTO cadastro);
     }
 }

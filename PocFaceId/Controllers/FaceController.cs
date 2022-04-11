@@ -32,16 +32,16 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<string> Login([FromBody]string cpf, string senha, string fotoAtual)
+        public async Task<string> Login([FromBody] string cpf, string senha, string fotoAtual)
         {
             try
             {
                 var usuario = _usuarioRepository.buscarPessoaIdLogin(cpf, senha);
                 if (usuario != null)
                 {
-                    var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);  
+                    var pessoa = _pessoaRepository.BuscarPessoa(usuario.PessoaId);
                     string recognitionModel03 = RecognitionModel.Recognition04;
-                    IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);     
+                    IFaceClient client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);
                     List<DetectedFace> faceReferencia = await DetectFaceRecognize(client, fotoAtual, recognitionModel03);
                     if (faceReferencia.Count > 1)
                     {
@@ -59,29 +59,24 @@ namespace PocFaceId.Controllers
                     else
                     {
                         return $"A pessoa que está em frente a câmera não é o(a) sr(a), {pessoa.Nome}";
-                    }                  
+                    }
                 }
                 else
                 {
                     throw new Exception("Não foi possível encontrar o usuário.");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
             }
         }
+
+
         [HttpPut]
-        public async Task<bool> Cadastrar([FromBody]CadastroDTO cadastro)
+        public async Task<string> Cadastrar([FromBody] CadastroDTO cadastro)
         {
-            if (_usuarioRepository.CadastrarUsuário(cadastro))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+           return _usuarioRepository.CadastrarUsuário(cadastro);
         }
 
         private async Task<List<DetectedFace>> DetectFaceRecognize(IFaceClient faceClient, string image64, string recognition_model)

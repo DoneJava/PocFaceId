@@ -19,12 +19,12 @@ namespace PocFaceId.Database.Repository
         }
 
 
-        public Usuario buscarPessoaIdLogin (string login, string senha)
+        public Usuario buscarPessoaIdLogin(string login, string senha)
         {
             try
             {
                 var usuario = _context.Usuario.FirstOrDefault(x => x.Login == login);
-                if(usuario.Senha == senha)
+                if (usuario.Senha == senha)
                 {
                     return usuario;
                 }
@@ -33,12 +33,12 @@ namespace PocFaceId.Database.Repository
                     throw new Exception("A senha está incorreta.");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
-        } 
-        public bool CadastrarUsuário(CadastroDTO cadastro)
+        }
+        public string CadastrarUsuário(CadastroDTO cadastro)
         {
             try
             {
@@ -46,26 +46,28 @@ namespace PocFaceId.Database.Repository
                 Pessoa pessoaCadastrada = new Pessoa();
                 if (cadastro != null)
                 {
-                    pessoaCadastrada.Nome = cadastro.Nome;
-                    pessoaCadastrada.Foto = cadastro.Foto;
-                    var teste = _context.Add(pessoaCadastrada);
-                    _context.SaveChanges();
-                    var pessoa = _context.Pessoa.FirstOrDefault(x => x.Foto == cadastro.Foto && x.Nome == cadastro.Nome);
-                    usuarioCadastrado.Login = cadastro.cpf;
-                    usuarioCadastrado.Senha = cadastro.Senha;
-                    usuarioCadastrado.PessoaId = pessoa.Id;
-                    _context.Usuario.Add(usuarioCadastrado);
-                    _context.SaveChanges();
-                    return true;
+                    return "Cadastro inclompleto.";
                 }
-                else
+                var listaPessoas = _context.Usuario.Select(x => x.Login);
+                if (listaPessoas.Contains(cadastro.cpf))
                 {
-                    return false;
+                    return "Esse cpf já está cadastrado!";
                 }
+                pessoaCadastrada.Nome = cadastro.Nome;
+                pessoaCadastrada.Foto = cadastro.Foto;
+                var teste = _context.Add(pessoaCadastrada);
+                _context.SaveChanges();
+                var pessoa = _context.Pessoa.FirstOrDefault(x => x.Foto == cadastro.Foto && x.Nome == cadastro.Nome);
+                usuarioCadastrado.Login = cadastro.cpf;
+                usuarioCadastrado.Senha = cadastro.Senha;
+                usuarioCadastrado.PessoaId = pessoa.Id;
+                _context.Usuario.Add(usuarioCadastrado);
+                _context.SaveChanges();
+                return "Cadastrado com sucesso!";
             }
             catch (Exception ex)
             {
-                return false;
+                return ex.Message;
             }
         }
     }
