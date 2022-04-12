@@ -11,6 +11,6 @@ namespace PocFaceId.Database.Interface
     {
         Usuario buscarPessoaIdLogin(string login, string senha);
         string CadastrarUsuário(CadastroDTO cadastro);
-        bool Logar(CadastroDTO cadastroDTO);
+        string Logar(CadastroDTO cadastroDTO);
     }
 }
