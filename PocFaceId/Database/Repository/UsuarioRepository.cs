@@ -46,12 +46,18 @@ namespace PocFaceId.Database.Repository
                return "0";
             }
         }
-        public string CadastrarUsuário(CadastroDTO cadastro)
+        public bool CadastrarUsuário(CadastroDTO cadastro)
         {
             try
             {
-                if (cadastro == null) return "Cadastro inclompleto.";
-                if (_context.Usuario.Any(x => x.Login == cadastro.cpf)) return "Esse cpf já está cadastrado!";
+                if (cadastro == null) 
+                {
+                    return false;
+                }
+                if (_context.Usuario.Any(x => x.Login == cadastro.cpf)) 
+                {
+                    return false;
+                }             
                 Usuario usuarioCadastrado = new Usuario()
                 { 
                     Login = cadastro.cpf,
@@ -63,11 +69,11 @@ namespace PocFaceId.Database.Repository
                 };
                 _context.Usuario.Add(usuarioCadastrado);
                 _context.SaveChanges();
-                return "Cadastrado com sucesso!";
+                return true;
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                return false;
             }
         }
     }

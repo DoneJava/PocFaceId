@@ -12,5 +12,6 @@ namespace PocFaceId.Model
         public int Id { get; set; }
         public string Nome { get; set; }
         public string Foto { get; set; }
+        public Usuario Usuario { get; set; }
     }
 }
