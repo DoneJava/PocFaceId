@@ -39,27 +39,50 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<string> ValidarUsuario([FromBody] CadastroDTO cadastroDTO)
+        public async Task<dynamic> ValidarUsuario([FromBody] CadastroDTO cadastroDTO)
         {
+            RespostaApiValidarDTO resposta = new RespostaApiValidarDTO();
             cadastroDTO.img = cadastroDTO.img.Split(',').Last();
             var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
             if (usuario == null)
-                return "Não foi possível encontrar o usuário.";
+            {
+                resposta.Validador = false;
+                resposta.MensagemRsposta = "Não foi possível encontrar o usuário.";
+                return  resposta;
+            }
 
             List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
             if (faceReferencia.Count == 0)
-                return "Nenhum rosto reconhecido.";
+            {
+                resposta.Validador = false;
+                resposta.MensagemRsposta = "Nenhum rosto reconhecido.";
+                return resposta;
+            }
+                 
             if (faceReferencia.Count > 1)
-                return "Por favor, fique somente 1(uma) pessoa em frente a câmera.";
+            {
+                resposta.Validador = false;
+                resposta.MensagemRsposta = "Por favor, fique somente 1(uma) pessoa em frente a câmera.";
+                return resposta;
+            }
+                 
             Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
             List<DetectedFace> faceComparacao = await DetectFaceRecognize(_client, usuario.Pessoa.Foto, _recognitionModel03);
             Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
             VerifyResult resultadoVerificacao = await _client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
             double valorMínConfianca = 0.8;
             if (resultadoVerificacao.Confidence >= valorMínConfianca)
-                return $"Bem vindo(a) a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}";
+            {
+                resposta.Validador = true;
+                resposta.MensagemRsposta = $"Bem vindo(a) a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}";
+                return resposta;
+            }
             else
-                return $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}";
+            {
+                resposta.Validador = true;
+                resposta.MensagemRsposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}";
+                return resposta;
+            }                
         }
 
         [HttpPut]
@@ -69,7 +92,7 @@ namespace PocFaceId.Controllers
             var aux = _usuarioRepository.Logar(cadastroDTO);
             if (aux == "0")
             {
-                return Conflict();
+                return Unauthorized();
             }
             else
             {
