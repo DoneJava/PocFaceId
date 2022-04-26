@@ -63,16 +63,19 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPut]
-        public async Task<string> Login([FromBody] CadastroDTO cadastroDTO)
+        public async Task<dynamic> Login([FromBody] CadastroDTO cadastroDTO)
         {
+            RespostaApiLoginDTO resposta = new RespostaApiLoginDTO();
             var aux = _usuarioRepository.Logar(cadastroDTO);
             if (aux == "0")
             {
-                throw new Exception("Usuário ou senha inválido.");
+                return Conflict();
             }
             else
             {
-                return aux;
+                resposta.MensagemResposta = aux;
+                resposta.Validador = true;
+                return resposta;
             }
         }
 
@@ -94,6 +97,7 @@ namespace PocFaceId.Controllers
         [Route("Cadastrar")]
         public async Task<dynamic> Cadastrar(CadastroDTO cadastro)
         {
+
             var aux = _usuarioRepository.CadastrarUsuário(cadastro);
             if (aux == true)
             {
