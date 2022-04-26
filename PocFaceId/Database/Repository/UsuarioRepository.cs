@@ -26,24 +26,30 @@ namespace PocFaceId.Database.Repository
             if (usuario.Senha == senha) return usuario;
             else throw new Exception("A senha está incorreta.");
         }
-        public string Logar(CadastroDTO cadastroDTO)
+        public CadastroDTO Logar(CadastroDTO cadastroDTO)
         {
+            CadastroDTO cadastro = new CadastroDTO();
             try
             {
                 var usuarioLogado = _context.Usuario.FirstOrDefault(x => x.Login == cadastroDTO.cpf && x.Senha == cadastroDTO.password);
-                var pessoaFoto = _context.Pessoa.FirstOrDefault(x => x.Id == usuarioLogado.PessoaId).Foto;
+                cadastro.img = _context.Pessoa.FirstOrDefault(x => x.Id == usuarioLogado.PessoaId).Foto;
+                cadastro.cpf = usuarioLogado.Login;
+                cadastro.password = usuarioLogado.Senha;
+
                 if (usuarioLogado != null)
                 {
-                    return pessoaFoto;
+                    return cadastro;
                 }
                 else
                 {
-                    return "0";
+                    cadastro.img = "0";
+                    return cadastro;
                 }
             }
             catch
             {
-               return "0";
+                cadastro.img = "0";
+                    return cadastro;
             }
         }
         public bool CadastrarUsuário(CadastroDTO cadastro)
