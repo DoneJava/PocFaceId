@@ -40,12 +40,12 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<dynamic> ValidarUsuario([FromBody] CadastroDTO cadastroDTO)
+        public async Task<dynamic> ValidarUsuario([FromBody] string img)
         {
             try
             {
                 RespostaApiValidarDTO resposta = new RespostaApiValidarDTO();
-                cadastroDTO.img = cadastroDTO.img.Split(',').Last();
+                img = img.Split(',').Last();
                 var usuario = _usuarioRepository.buscarPessoaIdLogin(_cadastro.cpf, _cadastro.password);
                 if (usuario == null)
                 {
@@ -54,7 +54,7 @@ namespace PocFaceId.Controllers
                     return resposta;
                 }
 
-                List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
+                List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, img, _recognitionModel03);
                 if (faceReferencia.Count == 0)
                 {
                     resposta.Validador = false;
