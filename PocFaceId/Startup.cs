@@ -45,7 +45,7 @@ namespace PocFaceId
             });
 
             services.AddDbContext<PocFaceIdContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("PocFaceIdContext")));
+                    options.UseSqlServer(@"Data Source=dbserverdev\sqldev;Initial Catalog=POC_Reconhecimento_Facial;persist security info=True;integrated security=true"));
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
 
