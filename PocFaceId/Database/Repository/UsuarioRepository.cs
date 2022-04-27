@@ -18,8 +18,6 @@ namespace PocFaceId.Database.Repository
         {
             _context = context;
         }
-
-
         public Usuario buscarPessoaIdLogin(string login, string senha)
         {
             var usuario = _context.Usuario.Include(x => x.Pessoa).First(x => x.Login == login);
@@ -42,33 +40,30 @@ namespace PocFaceId.Database.Repository
                 }
                 else
                 {
-                    cadastro.img = "0";
+                    cadastro.img = string.Empty;
                     return cadastro;
                 }
             }
             catch
             {
-                cadastro.img = "0";
-                    return cadastro;
+                cadastro.img = string.Empty;
+                return cadastro;
             }
         }
         public bool CadastrarUsuário(CadastroDTO cadastro)
         {
             try
             {
-                if (cadastro == null) 
+                if (cadastro == null || _context.Usuario.Any(x => x.Login == cadastro.cpf))
                 {
                     return false;
                 }
-                if (_context.Usuario.Any(x => x.Login == cadastro.cpf)) 
-                {
-                    return false;
-                }             
                 Usuario usuarioCadastrado = new Usuario()
-                { 
+                {
                     Login = cadastro.cpf,
                     Senha = cadastro.password,
-                    Pessoa = new Pessoa() { 
+                    Pessoa = new Pessoa()
+                    {
                         Nome = cadastro.name,
                         Foto = cadastro.img.Split(",").Last()
                     }

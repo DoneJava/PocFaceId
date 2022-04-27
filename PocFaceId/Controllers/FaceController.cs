@@ -110,7 +110,7 @@ namespace PocFaceId.Controllers
             {
                 RespostaApiLoginDTO resposta = new RespostaApiLoginDTO();
                 var aux = _usuarioRepository.Logar(cadastroDTO);
-                if (aux.img == "0")
+                if (string.IsNullOrEmpty(aux.img))
                 {
                     return Unauthorized();
                 }
