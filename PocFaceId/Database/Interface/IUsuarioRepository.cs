@@ -9,7 +9,7 @@ namespace PocFaceId.Database.Interface
 {
     public interface IUsuarioRepository
     {
-        Usuario buscarPessoaIdLogin(string login, string senha);
+        Usuario buscarPessoaIdLogin(string img, string senha);
         bool CadastrarUsuário(CadastroDTO cadastro);
         CadastroDTO Logar(CadastroDTO cadastroDTO);
     }

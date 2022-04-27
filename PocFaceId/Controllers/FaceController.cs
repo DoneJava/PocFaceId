@@ -21,7 +21,6 @@ namespace PocFaceId.Controllers
     [ApiController]
     public class FaceController : ControllerBase
     {
-        CadastroDTO _cadastro = new CadastroDTO();
         const string SUBSCRIPTION_KEY = "726b5b918c3f4b638988a083dda31985";
         const string ENDPOINT = "https://eafcgfaceid01.cognitiveservices.azure.com/";
         private readonly IUsuarioRepository _usuarioRepository;
@@ -40,13 +39,13 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPost]
-        public async Task<dynamic> ValidarUsuario([FromBody] string img)
+        public async Task<dynamic> ValidarUsuario([FromBody]CadastroDTO cadastroDTO)
         {
             try
             {
                 RespostaApiValidarDTO resposta = new RespostaApiValidarDTO();
-                img = img.Split(',').Last();
-                var usuario = _usuarioRepository.buscarPessoaIdLogin(_cadastro.cpf, _cadastro.password);
+                cadastroDTO.img = cadastroDTO.img.Split(',').Last();
+                var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
                 if (usuario == null)
                 {
                     resposta.Validador = false;
@@ -54,7 +53,7 @@ namespace PocFaceId.Controllers
                     return resposta;
                 }
 
-                List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, img, _recognitionModel03);
+                List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
                 if (faceReferencia.Count == 0)
                 {
                     resposta.Validador = false;
@@ -98,7 +97,6 @@ namespace PocFaceId.Controllers
         {
             RespostaApiLoginDTO resposta = new RespostaApiLoginDTO();
             var aux = _usuarioRepository.Logar(cadastroDTO);
-            _cadastro = aux;
             if (aux.img == "0")
             {
                 return Unauthorized();
