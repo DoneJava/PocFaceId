@@ -54,7 +54,8 @@ namespace PocFaceId.Controllers
                     {
                         MensagemResposta = "Nenhum rosto reconhecido.",
                         success = false,
-                        StatusCode = 200
+                        StatusCode = 200,
+                        StatusMensagem = 1
                     });
                 }
 
@@ -62,9 +63,10 @@ namespace PocFaceId.Controllers
                 {
                     return Ok(new
                     {
-                        MensagemResposta = $"Por favor, fique somente 1(uma) pessoa em frente a câmera.",
+                        MensagemResposta = $"Por favor, fique somente uma pessoa em frente a câmera.",
                         success = false,
-                        StatusCode = 200
+                        StatusCode = 200,
+                        StatusMensagem = 2
                     });
                 }
 
@@ -77,9 +79,10 @@ namespace PocFaceId.Controllers
                 {
                     return Ok(new
                     {
-                        MensagemResposta = $"Bem vindo(a) a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}",
+                        MensagemResposta = $"Olá sr(a) {usuario.Pessoa.Nome}",
                         success = true,
-                        StatusCode = 200
+                        StatusCode = 200,
+                        StatusMensagem = 3
                     });
                 }
                 else
@@ -88,7 +91,8 @@ namespace PocFaceId.Controllers
                     {
                         MensagemResposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}",
                         success = false,
-                        StatusCode = 200
+                        StatusCode = 200,
+                        StatusMensagem = 4
                     });
                 }
             }
