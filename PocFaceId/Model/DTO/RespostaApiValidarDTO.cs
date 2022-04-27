@@ -8,6 +8,6 @@ namespace PocFaceId.Model.DTO
     public class RespostaApiValidarDTO
     {
         public bool Validador { get; set; }
-        public string MensagemRsposta { get; set; }   
+        public string MensagemResposta { get; set; }   
     }
 }

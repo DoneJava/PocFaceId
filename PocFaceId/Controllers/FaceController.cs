@@ -1,18 +1,12 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.CognitiveServices.Vision.Face;
 using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using PocFaceId.Database.Interface;
 using PocFaceId.Model.DTO;
-using PocFaceId.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PocFaceId.Controllers
@@ -24,22 +18,19 @@ namespace PocFaceId.Controllers
         const string SUBSCRIPTION_KEY = "726b5b918c3f4b638988a083dda31985";
         const string ENDPOINT = "https://eafcgfaceid01.cognitiveservices.azure.com/";
         private readonly IUsuarioRepository _usuarioRepository;
-        private IMapper _mapper;
         IFaceClient _client = Authenticate(ENDPOINT, SUBSCRIPTION_KEY);
         string _recognitionModel03 = RecognitionModel.Recognition04;
-        public FaceController(IUsuarioRepository usuarioRepository, IMapper mapper)
+        public FaceController(IUsuarioRepository usuarioRepository)
         {
             _usuarioRepository = usuarioRepository;
-            _mapper = mapper;
         }
-
         public static IFaceClient Authenticate(string endpoint, string key)
         {
             return new FaceClient(new ApiKeyServiceClientCredentials(key)) { Endpoint = endpoint };
         }
-
         [HttpPost]
-        public async Task<dynamic> ValidarUsuario([FromBody]CadastroDTO cadastroDTO)
+        [Route("Validar")]
+        public async Task<dynamic> ValidarUsuario([FromBody] CadastroDTO cadastroDTO)
         {
             try
             {
@@ -48,24 +39,33 @@ namespace PocFaceId.Controllers
                 var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
                 if (usuario == null)
                 {
-                    resposta.Validador = false;
-                    resposta.MensagemRsposta = "Não foi possível encontrar o usuário.";
-                    return resposta;
+                    return Ok(new
+                    {
+                        MensagemResposta = "Não foi possível encontrar o usuário.",
+                        success = false,
+                        StatusCode = 200
+                    });
                 }
 
                 List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
                 if (faceReferencia.Count == 0)
                 {
-                    resposta.Validador = false;
-                    resposta.MensagemRsposta = "Nenhum rosto reconhecido.";
-                    return resposta;
+                    return Ok(new
+                    {
+                        MensagemResposta = "Nenhum rosto reconhecido.",
+                        success = false,
+                        StatusCode = 200
+                    });
                 }
 
                 if (faceReferencia.Count > 1)
                 {
-                    resposta.Validador = false;
-                    resposta.MensagemRsposta = "Por favor, fique somente 1(uma) pessoa em frente a câmera.";
-                    return resposta;
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Por favor, fique somente 1(uma) pessoa em frente a câmera.",
+                        success = false,
+                        StatusCode = 200
+                    });
                 }
 
                 Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
@@ -75,15 +75,21 @@ namespace PocFaceId.Controllers
                 double valorMínConfianca = 0.8;
                 if (resultadoVerificacao.Confidence >= valorMínConfianca)
                 {
-                    resposta.Validador = true;
-                    resposta.MensagemRsposta = $"Bem vindo(a) a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}";
-                    return resposta;
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Bem vindo(a) a validação da Prova de Conceito sr(a), {usuario.Pessoa.Nome}",
+                        success = true,
+                        StatusCode = 200
+                    });
                 }
                 else
                 {
-                    resposta.Validador = true;
-                    resposta.MensagemRsposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}";
-                    return resposta;
+                    return Ok(new
+                    {
+                        MensagemResposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}",
+                        success = false,
+                        StatusCode = 200
+                    });
                 }
             }
             catch
@@ -93,19 +99,30 @@ namespace PocFaceId.Controllers
         }
 
         [HttpPut]
+        [Route("Login")]
         public async Task<dynamic> Login([FromBody] CadastroDTO cadastroDTO)
         {
-            RespostaApiLoginDTO resposta = new RespostaApiLoginDTO();
-            var aux = _usuarioRepository.Logar(cadastroDTO);
-            if (aux.img == "0")
+            try
             {
-                return Unauthorized();
+                RespostaApiLoginDTO resposta = new RespostaApiLoginDTO();
+                var aux = _usuarioRepository.Logar(cadastroDTO);
+                if (aux.img == "0")
+                {
+                    return Unauthorized();
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = aux.img,
+                        success = true,
+                        StatusCode = 200
+                    });
+                }
             }
-            else
+            catch
             {
-                resposta.MensagemResposta = aux.img;
-                resposta.Validador = true;
-                return resposta;
+                return BadRequest();
             }
         }
 
@@ -133,6 +150,7 @@ namespace PocFaceId.Controllers
             {
                 return Ok(new
                 {
+                    MensagemResposta = "Cadastro feito com sucesso!",
                     success = true,
                     StatusCode = 200
                 });
@@ -150,27 +168,46 @@ namespace PocFaceId.Controllers
         }
         [HttpPut]
         [Route("VerificarImg")]
-        public async Task<RespostaApiDTO> VerificarImg(string img)
+        public async Task<dynamic> VerificarImg(string img)
         {
-            RespostaApiDTO resposta = new RespostaApiDTO();
-            List<DetectedFace> temRosto = await DetectFaceRecognize(_client, img, _recognitionModel03);
-            if (temRosto.Count() == (int)QtdRostos.UmRosto)
+            try
             {
-                resposta.MensagemRetorno = "Sucesso!";
-                resposta.Validador = (int)QtdRostos.UmRosto;
-                return resposta;
+                RespostaApiDTO resposta = new RespostaApiDTO();
+                List<DetectedFace> temRosto = await DetectFaceRecognize(_client, img, _recognitionModel03);
+                if (temRosto.Count() == (int)QtdRostos.UmRosto)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Sucesso!",
+                        Validador = (int)QtdRostos.UmRosto,
+                        success = true,
+                        StatusCode = 200
+                    });
+                }
+                else if (temRosto.Count() == (int)QtdRostos.NenhumRosto)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Nenhum rosto encontrado. Por favor, tire outra foto.",
+                        Validador = (int)QtdRostos.NenhumRosto,
+                        success = false,
+                        StatusCode = 200
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Foram encontrados mais de um rosto na imagem. Por favor, tire outra foto.",
+                        Validador = (int)QtdRostos.MaisDeUmRosto,
+                        success = false,
+                        StatusCode = 200
+                    });
+                }
             }
-            else if (temRosto.Count() == (int)QtdRostos.NenhumRosto)
+            catch
             {
-                resposta.MensagemRetorno = "Nenhum rosto encontrado. Por favor, tire outra foto.";
-                resposta.Validador = (int)QtdRostos.NenhumRosto;
-                return resposta;
-            }
-            else
-            {
-                resposta.MensagemRetorno = "Foram encontrados mais de um rosto na imagem. Por favor, tire outra foto.";
-                resposta.Validador = (int)QtdRostos.MaisDeUmRosto;
-                return resposta;
+                return BadRequest();
             }
         }
     }
