@@ -55,7 +55,7 @@ namespace PocFaceId.Controllers
                         MensagemResposta = "Nenhum rosto reconhecido.",
                         success = false,
                         StatusCode = 200,
-                        StatusMensagem = 1
+                        StatusMensagem = Validador.NenhumUsuario
                     });
                 }
 
@@ -66,7 +66,7 @@ namespace PocFaceId.Controllers
                         MensagemResposta = $"Por favor, fique somente uma pessoa em frente a câmera.",
                         success = false,
                         StatusCode = 200,
-                        StatusMensagem = 2
+                        StatusMensagem = Validador.DoisUsuarios
                     });
                 }
 
@@ -82,7 +82,7 @@ namespace PocFaceId.Controllers
                         MensagemResposta = $"Olá sr(a) {usuario.Pessoa.Nome}",
                         success = true,
                         StatusCode = 200,
-                        StatusMensagem = 3
+                        StatusMensagem = Validador.UsuarioCorreto
                     });
                 }
                 else
@@ -92,7 +92,7 @@ namespace PocFaceId.Controllers
                         MensagemResposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}",
                         success = false,
                         StatusCode = 200,
-                        StatusMensagem = 4
+                        StatusMensagem = Validador.UsuarioIncorreto
                     });
                 }
             }
@@ -169,6 +169,13 @@ namespace PocFaceId.Controllers
             UmRosto = 1,
             NenhumRosto = 0,
             MaisDeUmRosto = 2
+        }
+        public enum Validador
+        {
+            NenhumUsuario = 1,
+            DoisUsuarios = 2,
+            UsuarioCorreto = 3,
+            UsuarioIncorreto = 4
         }
         [HttpPut]
         [Route("VerificarImg")]
