@@ -82,7 +82,8 @@ namespace PocFaceId.Controllers
                         MensagemResposta = $"Olá sr(a) {usuario.Pessoa.Nome}",
                         success = true,
                         StatusCode = 200,
-                        StatusMensagem = Validador.UsuarioCorreto
+                        StatusMensagem = Validador.UsuarioCorreto,
+                        Confidence = resultadoVerificacao.Confidence
                     });
                 }
                 else
@@ -92,7 +93,8 @@ namespace PocFaceId.Controllers
                         MensagemResposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}",
                         success = false,
                         StatusCode = 200,
-                        StatusMensagem = Validador.UsuarioIncorreto
+                        StatusMensagem = Validador.UsuarioIncorreto,
+                        Confidence = resultadoVerificacao.Confidence
                     });
                 }
             }
