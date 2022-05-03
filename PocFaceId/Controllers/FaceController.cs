@@ -36,18 +36,9 @@ namespace PocFaceId.Controllers
             {
                 RespostaApiValidarDTO resposta = new RespostaApiValidarDTO();
                 cadastroDTO.img = cadastroDTO.img.Split(',').Last();
-                var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
-                if (usuario == null)
-                {
-                    return Ok(new
-                    {
-                        MensagemResposta = "Não foi possível encontrar o usuário.",
-                        success = false,
-                        StatusCode = 200
-                    });
-                }
-
+                
                 List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
+                List<DetectedFace> faceReferencia2 = await DetectFaceRecognize(_client, cadastroDTO.img2, _recognitionModel03);
                 if (faceReferencia.Count == 0)
                 {
                     return Ok(new
@@ -69,7 +60,28 @@ namespace PocFaceId.Controllers
                         StatusMensagem = Validador.DoisUsuarios
                     });
                 }
-
+                if (faceReferencia[0].FaceAttributes.HeadPose.Pitch == faceReferencia2[0].FaceAttributes.HeadPose.Pitch &&
+                    faceReferencia[0].FaceAttributes.HeadPose.Roll == faceReferencia2[0].FaceAttributes.HeadPose.Roll &&
+                    faceReferencia[0].FaceAttributes.HeadPose.Yaw == faceReferencia2[0].FaceAttributes.HeadPose.Yaw)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Não é uma pessoa em frente a câmera.",
+                        success = false,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.NenhumUsuario
+                    });
+                }
+                var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
+                if (usuario == null)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Não foi possível encontrar o usuário.",
+                        success = false,
+                        StatusCode = 200
+                    });
+                }
                 Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
                 List<DetectedFace> faceComparacao = await DetectFaceRecognize(_client, usuario.Pessoa.Foto, _recognitionModel03);
                 Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;

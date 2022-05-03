@@ -11,5 +11,6 @@ namespace PocFaceId.Model.DTO
         public string password { get; set; }
         public string img { get; set; }
         public string name { get; set; }
+        public string img2 { get; set; }
     }
 }
