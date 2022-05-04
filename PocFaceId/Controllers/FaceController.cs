@@ -117,7 +117,91 @@ namespace PocFaceId.Controllers
                 return BadRequest();
             }
         }
+        [Route("ValidarAtivo")]
+        public async Task<dynamic> ValidarUsuarioAtivo([FromBody] CadastroDTO cadastroDTO)
+        {
+            try
+            {
+                RespostaApiValidarDTO resposta = new RespostaApiValidarDTO();
 
+                cadastroDTO.img = cadastroDTO.img.Split(',').Last();
+                cadastroDTO.img2 = cadastroDTO.img2.Split(',').Last();
+                List<DetectedFace> faceReferencia = await DetectFaceRecognize(_client, cadastroDTO.img, _recognitionModel03);
+                List<DetectedFace> faceReferencia2 = await DetectFaceRecognize(_client, cadastroDTO.img2, _recognitionModel03);
+                if (faceReferencia.Count == 0)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Nenhum rosto reconhecido.",
+                        success = false,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.NenhumUsuario
+                    });
+                }
+
+                if (faceReferencia.Count > 1)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Por favor, fique somente uma pessoa em frente a câmera.",
+                        success = false,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.DoisUsuarios
+                    });
+                }
+                if (faceReferencia[0].FaceAttributes.Smile >= 0.8 && faceReferencia2[0].FaceAttributes.Smile <= 0.8)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Não é uma pessoa em frente a câmera.",
+                        success = false,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.NenhumUsuario
+                    });
+                }
+                var usuario = _usuarioRepository.buscarPessoaIdLogin(cadastroDTO.cpf, cadastroDTO.password);
+                if (usuario == null)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = "Não foi possível encontrar o usuário.",
+                        success = false,
+                        StatusCode = 200
+                    });
+                }
+                Guid faceReferenciaIdentificada = faceReferencia[0].FaceId.Value;
+                List<DetectedFace> faceComparacao = await DetectFaceRecognize(_client, cadastroDTO.img2, _recognitionModel03);
+                Guid faceComparacaoIdentificada = faceComparacao[0].FaceId.Value;
+                VerifyResult resultadoVerificacao = await _client.Face.VerifyFaceToFaceAsync(faceComparacaoIdentificada, faceReferenciaIdentificada);
+                double valorMínConfianca = 0.8;
+                if (resultadoVerificacao.Confidence >= valorMínConfianca)
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = $"Olá sr(a) {usuario.Pessoa.Nome}",
+                        success = true,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.UsuarioCorreto,
+                        Confidence = resultadoVerificacao.Confidence
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        MensagemResposta = $"A pessoa que está em frente a câmera não é o(a) sr(a), {usuario.Pessoa.Nome}",
+                        success = false,
+                        StatusCode = 200,
+                        StatusMensagem = Validador.UsuarioIncorreto,
+                        Confidence = resultadoVerificacao.Confidence
+                    });
+                }
+            }
+            catch
+            {
+                return BadRequest();
+            }
+        }
         [HttpPut]
         [Route("Login")]
         public async Task<dynamic> Login([FromBody] CadastroDTO cadastroDTO)
@@ -150,7 +234,7 @@ namespace PocFaceId.Controllers
         {
             byte[] imageBytes = Convert.FromBase64String(image64);
             MemoryStream streamImage = new MemoryStream(imageBytes);
-            IList<DetectedFace> detectedFaces = await faceClient.Face.DetectWithStreamAsync(streamImage, recognitionModel: recognition_model, detectionModel: DetectionModel.Detection03, returnFaceAttributes: new List<FaceAttributeType> { FaceAttributeType.QualityForRecognition, FaceAttributeType.HeadPose });
+            IList<DetectedFace> detectedFaces = await faceClient.Face.DetectWithStreamAsync(streamImage, recognitionModel: recognition_model, detectionModel: DetectionModel.Detection03, returnFaceAttributes: new List<FaceAttributeType> { FaceAttributeType.QualityForRecognition, FaceAttributeType.HeadPose, FaceAttributeType.Smile });
             List<DetectedFace> sufficientQualityFaces = new List<DetectedFace>();
             foreach (DetectedFace detectedFace in detectedFaces)
             {
